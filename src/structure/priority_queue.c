@@ -16,12 +16,13 @@ void pq_insert(priority_queue_t *pq, tuple_t key) {
 
 tuple_t pq_first(priority_queue_t *pq) {
 
+  tuple_t zero;
+  zero.x = 0.0;
+  zero.y = 0;
+
   // Caso a fila esteja vazia, retorna um elemento zero
   if (pq->size == 0) {
-    return (tuple_t) {
-      .x = 0,
-      .y = 0
-    };
+    return zero;
   }
 
   return avl_get_largest(&(pq->tree));

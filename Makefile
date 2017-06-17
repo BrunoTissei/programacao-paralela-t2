@@ -1,4 +1,4 @@
-CC := gcc
+CC := mpicc
 SRCDIR := src
 BUILDDIR := obj
 TARGET := knn
@@ -6,7 +6,7 @@ TARGET := knn
 SOURCES := $(shell find $(SRCDIR) -type f -name *.c)
 OBJECTS := $(patsubst $(SRCDIR)/%, $(BUILDDIR)/%, $(SOURCES:.c=.o))
 
-CFLAGS := -g -O3 -mavx -Wall -fopenmp -Isrc -lm
+CFLAGS := -g -O3 -mavx -fopenmp -Isrc -lm
 LIB := -g -fopenmp -lm
 
 $(TARGET): $(OBJECTS)

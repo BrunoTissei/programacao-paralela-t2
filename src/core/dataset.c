@@ -1,5 +1,53 @@
 #include "core/dataset.h"
 
+double *pack_set(set_t *set, int begin, int end) {
+  int size = set->data[0]->size;
+  double *packed = (double *) calloc(1, (end - begin) * ((sizeof(double) * (size)) + 
+        (3 * sizeof(double))) + sizeof(double));
+
+  int k = 0;
+  packed[k++] = (double) (end - begin);
+  for (int i = begin; i < end; ++i) {
+    if (set->data[i] == NULL) {
+      packed[k++] = 0;
+      continue;
+    }
+
+    packed[k++] = (double) set->data[i]->size;
+    packed[k++] = (double) set->data[i]->mclass;
+    packed[k++] = (double) set->data[i]->id;
+
+    for (int j = 0; j < set->data[i]->size; ++j) {
+      packed[k++] = set->data[i]->value[j];
+    }
+  }
+
+  return packed;
+}
+
+set_t *unpack_set(double *packed) {
+  int k = 0;
+  set_t *set = create_set((int) packed[k++]);
+  
+  for (int i = 0; i < set->size; ++i) {
+    int size = (int) packed[k++];
+    if (!size)
+      continue;
+
+    int mclass = (int) packed[k++];
+    int id = (int) packed[k++];
+
+    set->data[i] = create_point(size, id);
+    set->data[i]->mclass = mclass;
+
+    for (int j = 0; j < size; ++j) {
+      set->data[i]->value[j] = packed[k++];
+    }
+  }
+
+  return set;
+}
+
 point_t *create_point(uint size, int id) {
   point_t *p = (point_t *) calloc(1, sizeof(point_t));
 

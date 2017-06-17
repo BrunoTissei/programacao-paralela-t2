@@ -1,0 +1,3 @@
+#!/bin/bash
+
+mpirun --hostfile hostfile ./knn data/training_set data/testing_set 1

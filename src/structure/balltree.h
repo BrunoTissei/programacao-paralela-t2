@@ -23,6 +23,7 @@ typedef struct node_t {
 typedef struct balltree_t {
   int k;
   int nodes_size;
+  int radi_size;
   int node_cnt;
 
   node_t *root;
@@ -33,8 +34,12 @@ typedef struct balltree_t {
   int *nodes_info;
 } balltree_t;
 
+
 // Cria uma ball tree com todos os elementos do dataset
 balltree_t *create_balltree(set_t *dataset, int k);
+
+balltree_t *get_balltree(set_t *dataset, set_t *centers, double *radi, 
+    int *packed, int k);
 
 // Preenche vetor result com os pontos mais proximos de point
 int search(balltree_t *bt, const point_t *point, int *result);
@@ -45,7 +50,9 @@ void delete_nodes(node_t *n);
 // Remove ball tree da memoria
 void delete_balltree(balltree_t *balltree);
 
-void pack_nodes(balltree_t *bt, node_t *n);
+void pack_nodes(balltree_t *bt, node_t *n, int par, int dir);
+
+void unpack_nodes(balltree_t *bt, int *packed);
 
 // Constroi ball tree recursivamente
 node_t *build_tree(balltree_t *bt, set_t *points, int k);

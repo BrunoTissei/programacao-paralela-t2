@@ -5,22 +5,32 @@ balltree_t *create_balltree(set_t *dataset, int k) {
   balltree->nodes_size = 0;
   balltree->node_cnt = 0;
 
-  #pragma omp parallel num_threads(1)
-  {
-    #pragma omp single
-    {
-      balltree->dataset = dataset;
-      balltree->k = k;
-      balltree->root = build_tree(balltree, dataset, k);
-    }
-  }
+  balltree->dataset = dataset;
+  balltree->k = k;
+  balltree->root = build_tree(balltree, dataset, k);
 
-  balltree->radi = (double *) malloc(sizeof(double) * balltree->node_cnt);
+  balltree->radi_size = balltree->node_cnt;
+
+  balltree->radi = (double *) malloc(sizeof(double) * balltree->radi_size);
   balltree->nodes_info = (int *) malloc(sizeof(int) * balltree->nodes_size);
-  balltree->centers = create_set(balltree->nodes_size);
+  balltree->centers = create_set(balltree->node_cnt);
   
-  balltree->node_cnt = 0;
-  pack_nodes(balltree, balltree->root);
+  balltree->nodes_info[0] = balltree->node_cnt;
+  balltree->node_cnt = 1;
+  pack_nodes(balltree, balltree->root, -1, -1);
+
+  return balltree;
+}
+
+balltree_t *get_balltree(set_t *dataset, set_t *centers, double *radi, int *packed, int k) {
+  balltree_t *balltree = (balltree_t *) calloc(1, sizeof(balltree_t));
+
+  balltree->dataset = dataset;
+  balltree->centers = centers;
+  balltree->radi = radi;
+  balltree->k = k;
+
+  unpack_nodes(balltree, packed);
 
   return balltree;
 }
@@ -50,29 +60,78 @@ void delete_balltree(balltree_t *balltree) {
   free(balltree->dataset);
 }
 
-void pack_nodes(balltree_t *bt, node_t *n) {
+void pack_nodes(balltree_t *bt, node_t *n, int par, int dir) {
   if (n == NULL)
     return;
 
-  pack_nodes(bt, n->left);
-  pack_nodes(bt, n->right);
-
-  bt->centers->data[n->id] = (n->center);
+  //bt->centers->data[n->id] = n->center;
+  bt->centers->data[n->id] = create_point(n->center->size, -1);
+  for (int i = 0; i < n->center->size; ++i)
+    bt->centers->data[n->id]->value[i] = n->center->value[i];
   bt->radi[n->id] = n->radius;
+
   bt->nodes_info[bt->node_cnt++] = n->size;
   bt->nodes_info[bt->node_cnt++] = n->id;
   bt->nodes_info[bt->node_cnt++] = n->leaf;
-  bt->nodes_info[bt->node_cnt++] = (n->left != NULL) ? n->left->id : -1;
-  bt->nodes_info[bt->node_cnt++] = (n->right != NULL) ? n->right->id : -1;
+  //bt->nodes_info[bt->node_cnt++] = (n->left != NULL) ? n->left->id : -1;
+  //bt->nodes_info[bt->node_cnt++] = (n->right != NULL) ? n->right->id : -1;
+
+  bt->nodes_info[bt->node_cnt++] = par;
+  bt->nodes_info[bt->node_cnt++] = dir; 
 
   if (n->size > 5)
     for (int i = 0; i < n->points->size; ++i)
       bt->nodes_info[bt->node_cnt++] = n->points->data[i]->id;
+
+  pack_nodes(bt, n->left, n->id, 0);
+  pack_nodes(bt, n->right, n->id, 1);
+}
+
+void unpack_nodes(balltree_t *bt, int *packed) {
+  int k = 0;
+  int cnt = packed[k++];
+  node_t **nodes = (node_t **) malloc(sizeof(node_t *) * cnt);
+
+  for (int i = 0; i < cnt; ++i) {
+    int size = packed[k++];
+    int id = packed[k++];
+    int leaf = packed[k++];
+
+    int par = packed[k++];
+    int dir = packed[k++];
+
+    node_t *node = (node_t *) calloc(1, sizeof(node_t));
+    node->size = size;
+    node->id = id;
+    node->leaf = leaf;
+    node->radius = bt->radi[id];
+    node->left = node->right = NULL;
+
+    node->center = bt->centers->data[id];
+
+    if (size > 5) {
+      node->points = create_set(size - 5);
+      for (int j = 0; j < size - 5; ++j)
+        node->points->data[j] = bt->dataset->data[packed[k++]];
+    }
+
+    if (par == -1)
+      bt->root = node;
+    else if (!dir)
+      nodes[par]->left = node;
+    else
+      nodes[par]->right = node;
+
+    nodes[id] = node;
+  }
+
+  free(nodes);
 }
 
 node_t *build_tree(balltree_t *bt, set_t *points, int k) {
   int size = 5;
   node_t *node = (node_t *) calloc(1, sizeof(node_t));
+  node->id = bt->node_cnt++;
 
   calc_center(points, &(node->center));
   
@@ -80,9 +139,9 @@ node_t *build_tree(balltree_t *bt, set_t *points, int k) {
     size += points->size;
     node->points = points;
 
+    node->radius = 0.0;
     node->leaf = TRUE;
-    node->left = NULL;
-    node->right = NULL;
+    node->left = node->right = NULL;
   } else {
     int left_idx = 0;
     set_t *left_part;
@@ -93,18 +152,12 @@ node_t *build_tree(balltree_t *bt, set_t *points, int k) {
 
     node->leaf = FALSE;
 
-    #pragma omp task
     node->left = build_tree(bt, left_part, k);
-    #pragma omp task
     node->right = build_tree(bt, right_part, k);
-
-    #pragma omp taskwait
   }
 
   node->size = size;
   bt->nodes_size += size;
-
-  node->id = bt->node_cnt++;
 
   return node;
 }

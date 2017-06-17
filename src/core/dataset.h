@@ -19,6 +19,10 @@ typedef struct set_t {
 } set_t;
 
 
+double *pack_set(set_t *set, int begin, int end);
+
+set_t *unpack_set(double *packed);
+
 // Retorna um ponteiro para um ponto alocado na memoria
 point_t *create_point(uint size, int id);
 
