@@ -27,7 +27,10 @@ int main(int argc, char **argv) {
   int k = atoi(argv[3]);
 
   set_t *training_set, *testing_set_input, *testing_set;
-  double start, reading_time, building_time, searching_time, accuracy;
+
+  double start_time;
+  double start, accuracy;
+  double reading_time, building_time, searching_time;
 
   int size = 0;
   int packsize = 0;
@@ -37,6 +40,8 @@ int main(int argc, char **argv) {
   // ##########################################################################
 
   if (!rank) {
+    start_time = timestamp();
+
     printf("Reading input...\n");
     start = timestamp();
 
@@ -90,8 +95,6 @@ int main(int argc, char **argv) {
     free(pack);
   }
 
-  //testing_set = testing_set_input;
-
   // ##########################################################################
   // # TREINAMENTO
   // ##########################################################################
@@ -102,15 +105,6 @@ int main(int argc, char **argv) {
   double *packed_dataset, *packed_centers;
 
   knn_classifier_t *knn = create_classifier(k);
-
-/*  if (rank) {
-    FILE *fout = fopen("outdata", "w");
-    for (int i = 0; i < testing_set->size; ++i) {
-      for (int j = 0; j < testing_set->data[i]->size; ++j)
-        fprintf(fout, "%lf ", testing_set->data[i]->value[j]);
-      fprintf(fout, "\n");
-    }
-  }*/
 
   if (!rank) {
     printf("Building tree...\n");
@@ -193,7 +187,7 @@ int main(int argc, char **argv) {
     printf("Building time: %.0lf ms\n", building_time);
     printf("Searching time: %.0lf ms\n\n", searching_time);
 
-    printf("Total time: %0.lf ms\n", reading_time + building_time + searching_time);
+    printf("Total time: %0.lf ms\n", timestamp() - start_time);
     printf("Accuracy: %lf\n\n", accuracy);
   }
 
