@@ -185,9 +185,8 @@ int main(int argc, char **argv) {
 
     printf("Reading time: %.0lf ms\n", reading_time);
     printf("Building time: %.0lf ms\n", building_time);
-    printf("Searching time: %.0lf ms\n\n", searching_time);
-
-    printf("Total time: %0.lf ms\n", timestamp() - start_time);
+    printf("Searching time: %.0lf ms\n", searching_time);
+    printf("Total time: %0.lf ms\n\n", timestamp() - start_time);
     printf("Accuracy: %lf\n\n", accuracy);
   }
 

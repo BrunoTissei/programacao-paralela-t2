@@ -1,0 +1,32 @@
+#!/bin/bash
+
+p=$((1 + $1))
+echo "$p $2" > times
+
+hosts=( "hostfiles/host1" "hostfiles/host2" "hostfiles/host3" "hostfiles/host4" )
+
+for j in $(seq 1 $2)
+do
+  for i in $(seq 0 $1)
+  do
+    nproc=`cat ${hosts[$i]} | awk -F '=' '{ sum += $2 } END {print sum}'`
+		echo "Num. of Procs: $nproc"
+
+    proc=$((2 ** $i))
+    times=`./run ${hosts[$i]}| awk -F ' ' '{ print $3 }' | tail -n 7 | head -n 4 | sed 's| ms||g'`
+    echo $times >> times
+
+    #for j in $(seq 1 $2)
+    #do
+    #  times=`./knn data/training_set data/testing_set 1 | awk -F ' ' '{ print $3 }' | tail -n 7 | head -n 3 | sed 's| ms||g'`
+    #  echo $times >> times
+    #  echo "  " $times
+    #done
+  done
+done
+
+#rm -rf graphs
+#mkdir -p graphs
+#mv times graphs
+#python script/gen_graph.py graphs/times
+#mv *.png graphs

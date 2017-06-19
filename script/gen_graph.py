@@ -6,50 +6,35 @@ import matplotlib.pyplot as plt
 input_file = open(sys.argv[1], "r")
 p, n = map(int, input_file.readline().split())
 
-b_times, s_times, t_times = [], [], []
-b_ovrhead, s_ovrhead, t_ovrhead = [], [], []
 b_speedup, s_speedup, t_speedup = [], [], []
 b_effec, s_effec, t_effec = [], [], []
-b_sigma, s_sigma, t_sigma = [], [], []
 
 proc = [x for x in xrange(1, p + 1)]
 
-for i in xrange(p):
+b_times = [ 0 for i in xrange(p) ]
+s_times = [ 0 for i in xrange(p) ]
+t_times = [ 0 for i in xrange(p) ]
+
+for j in xrange(n):
     b_tot, s_tot, t_tot = 0, 0, 0
-    b_aux, s_aux, t_aux = [], [], []
 
-    for j in xrange(n):
-        read, build, search = map(float, input_file.readline().split())
-        b_tot += build
-        s_tot += search
-        t_tot += (read + build + search)
+    for i in xrange(p):
+        read, build, search, total = map(float, input_file.readline().split())
+        b_times[i] += build
+        s_times[i] += search
+        t_times[i] += total
 
-        b_aux.append(build)
-        s_aux.append(search)
-        t_aux.append(build + search + read)
+for i in xrange(p):
+    b_times[i] /= n
+    s_times[i] /= n
+    t_times[i] /= n
 
-    b_times.append(b_tot / n)
-    s_times.append(s_tot / n)
-    t_times.append(t_tot / n)
-
-    b_sigma.append(0.0)
-    s_sigma.append(0.0)
-    t_sigma.append(0.0)
-    for j in xrange(n):
-        b_sigma[i] += (b_aux[j] - b_times[i])**2
-        s_sigma[i] += (s_aux[j] - s_times[i])**2
-        t_sigma[i] += (t_aux[j] - t_times[i])**2
-
-    b_sigma[i] = math.sqrt(b_sigma[i] / n)
-    s_sigma[i] = math.sqrt(s_sigma[i] / n)
-    t_sigma[i] = math.sqrt(t_sigma[i] / n)
+#b_times.append(b_tot / n)
+#s_times.append(s_tot / n)
+#t_times.append(t_tot / n)
 
 
 for i in xrange(p):
-    b_ovrhead.append((i + 1) * b_times[i] - b_times[0])
-    s_ovrhead.append((i + 1) * s_times[i] - s_times[0])
-    t_ovrhead.append((i + 1) * t_times[i] - t_times[0])
-
     b_speedup.append(b_times[0] / b_times[i])
     s_speedup.append(s_times[0] / s_times[i])
     t_speedup.append(t_times[0] / t_times[i])
@@ -59,23 +44,23 @@ for i in xrange(p):
     t_effec.append(t_speedup[i] / (i + 1))
 
 
-graphs = ["overhead", "speedup", "efficiency", "avg_time", "std_deviation"]
-graphs_names = ["Overhead [ms]", "Speedup", "Efficiency", "Average Time [ms]", "Standard Deviation [ms]"]
-b_lists = [b_ovrhead, b_speedup, b_effec, b_times, b_sigma]
-s_lists = [s_ovrhead, s_speedup, s_effec, s_times, s_sigma]
-t_lists = [t_ovrhead, t_speedup, t_effec, t_times, t_sigma]
+graphs = ["speedup", "efficiency", "avg_time"]
+graphs_names = ["Speedup", "Efficiency", "Average Time [ms]"]
+b_lists = [b_speedup, b_effec, b_times]
+s_lists = [s_speedup, s_effec, s_times]
+t_lists = [t_speedup, t_effec, t_times]
 
 weak = True
 
 for i in xrange(len(graphs)):
 
     if weak:
-        plt.plot([1, 2, 4], b_lists[i], label="Build", color='#F92B14', linewidth=2)
-        plt.plot([1, 2, 4], s_lists[i], label="Search", color='#2C126B', linewidth=2)
-        plt.plot([1, 2, 4], t_lists[i], label="Total", color='#00933D', linewidth=2)
+        plt.plot([1, 2, 4, 8], b_lists[i], label="Build", color='#F92B14', linewidth=2)
+        plt.plot([1, 2, 4, 8], s_lists[i], label="Search", color='#2C126B', linewidth=2)
+        plt.plot([1, 2, 4, 8], t_lists[i], label="Total", color='#00933D', linewidth=2)
 
         plt.xlabel('n', fontsize=15)
-        plt.xticks([1, 2, 4])
+        plt.xticks([1, 2, 4, 8])
         # plt.xticks(np.arange(min(proc), max(proc)+1, 1.0))
     else:
         plt.plot(proc, b_lists[i], label="Build", color='#F92B14', linewidth=2)
