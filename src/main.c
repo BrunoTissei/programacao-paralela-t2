@@ -56,16 +56,19 @@ int main(int argc, char **argv) {
     } 
     
     if (!size)
-      size = testing_set_input->size / P;
+      packsize = testing_set_input->data[0]->size;
 
-    packsize = testing_set_input->data[0]->size;
+    if (!size)
+      size = testing_set_input->size / P;
   }
 
   MPI_Bcast(&size, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&packsize, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  if (size == -1)
-    return 1;
+  if (size == -1) {
+    MPI_Finalize();
+    return 0;
+  }
 
   if (!rank) {
     reading_time = timestamp() - start;
